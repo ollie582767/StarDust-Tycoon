@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stardust Tycoon</title>
+<meta name="theme-color" content="#7c3aed">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Stardust">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%233b0764'/%3E%3Ctext x='50' y='68' font-size='60' text-anchor='middle'%3E%E2%AD%90%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%233b0764'/%3E%3Ctext x='50' y='68' font-size='60' text-anchor='middle'%3E%E2%AD%90%3C/text%3E%3C/svg%3E">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #07071a;
+    --panel:    #0f0f2e;
+    --border:   #1e1e4a;
+    --gold:     #f0c040;
+    --glow:     #a855f7;
+    --blue:     #38bdf8;
+    --green:    #4ade80;
+    --text:     #e2e8f0;
+    --muted:    #64748b;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+  }
+
+  /* ── Stars background ── */
+  #stars {
+    position: fixed; inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 80% 10%, rgba(255,255,255,.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 50% 70%, rgba(255,255,255,.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 10% 80%, rgba(255,255,255,.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 60%, rgba(255,255,255,.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 35% 50%, rgba(255,255,255,.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 65% 90%, rgba(255,255,255,.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 5%  20%, rgba(255,255,255,.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 75% 40%, rgba(255,255,255,.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 45% 15%, rgba(255,255,255,.4) 0%, transparent 100%);
+    background-size: 400px 400px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Layout ── */
+  #app {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: 1fr 320px;
+    height: 100vh;
+    gap: 0;
+  }
+
+  /* ── Header ── */
+  #header {
+    grid-column: 1 / -1;
+    padding: 12px 24px;
+    background: rgba(15,15,46,.9);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    backdrop-filter: blur(8px);
+  }
+
+  #title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 900;
+    letter-spacing: .05em;
+    color: var(--gold);
+    text-shadow: 0 0 20px rgba(240,192,64,.5);
+    white-space: nowrap;
+  }
+
+  #install-btn {
+    background: rgba(168,85,247,.15);
+    border: 1px solid var(--glow);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: .7rem;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .15s, border-color .15s;
+  }
+  #install-btn:hover {
+    background: rgba(168,85,247,.3);
+    border-color: var(--blue);
+  }
+
+  .stat-block { text-align: center; }
+  .stat-block .val {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gold);
+  }
+  .stat-block .lbl {
+    font-size: .65rem;
+    color: var(--muted);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+
+  /* ── Clicker area ── */
+  #clicker-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #star-btn {
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%,
+      #c084fc 0%, #7c3aed 45%, #3b0764 100%);
+    border: 3px solid rgba(168,85,247,.6);
+    box-shadow:
+      0 0 40px rgba(168,85,247,.5),
+      0 0 80px rgba(168,85,247,.2),
+      inset 0 0 40px rgba(255,255,255,.05);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 72px;
+    transition: transform .08s ease, box-shadow .08s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+  }
+
+  #star-btn:hover {
+    box-shadow:
+      0 0 60px rgba(168,85,247,.7),
+      0 0 100px rgba(168,85,247,.35),
+      inset 0 0 40px rgba(255,255,255,.08);
+  }
+
+  #star-btn:active, #star-btn.clicked {
+    transform: scale(.93);
+    box-shadow:
+      0 0 80px rgba(168,85,247,.9),
+      0 0 30px rgba(240,192,64,.4),
+      inset 0 0 40px rgba(255,255,255,.1);
+  }
+
+  #click-hint {
+    font-size: .75rem;
+    color: var(--muted);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  /* Floating click numbers */
+  .floatie {
+    position: absolute;
+    font-family: 'Orbitron', sans-serif;
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--gold);
+    text-shadow: 0 0 8px rgba(240,192,64,.8);
+    pointer-events: none;
+    animation: floatUp .9s ease-out forwards;
+    z-index: 10;
+  }
+  @keyframes floatUp {
+    0%   { opacity: 1;   transform: translateY(0)   scale(1); }
+    100% { opacity: 0;   transform: translateY(-70px) scale(.8); }
+  }
+
+  /* Ripple */
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(168,85,247,.3);
+    transform: scale(0);
+    animation: rippleOut .6s ease-out forwards;
+    pointer-events: none;
+  }
+  @keyframes rippleOut {
+    to { transform: scale(4); opacity: 0; }
+  }
+
+  /* ── Upgrade panel ── */
+  #upgrade-panel {
+    background: rgba(15,15,46,.95);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  #upgrade-panel h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    color: var(--muted);
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  #upgrades-list {
+    overflow-y: auto;
+    flex: 1;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  #upgrades-list::-webkit-scrollbar { width: 4px; }
+  #upgrades-list::-webkit-scrollbar-track { background: transparent; }
+  #upgrades-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .upgrade-card {
+    background: rgba(30,30,74,.6);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, transform .08s;
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    align-items: center;
+    gap: 10px;
+  }
+  .upgrade-card:hover:not(.locked) {
+    background: rgba(50,50,100,.7);
+    border-color: var(--glow);
+    transform: translateX(-2px);
+  }
+  .upgrade-card.locked {
+    opacity: .45;
+    cursor: not-allowed;
+  }
+  .upgrade-card.maxed {
+    border-color: var(--gold);
+    background: rgba(240,192,64,.08);
+    cursor: default;
+  }
+
+  .upg-icon { font-size: 24px; text-align: center; }
+  .upg-name {
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .upg-desc {
+    font-size: .68rem;
+    color: var(--muted);
+    margin-top: 2px;
+    line-height: 1.3;
+  }
+  .upg-count {
+    font-family: 'Orbitron', sans-serif;
+    font-size: .7rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .upg-cost {
+    font-family: 'Orbitron', sans-serif;
+    font-size: .75rem;
+    font-weight: 700;
+    color: var(--gold);
+    white-space: nowrap;
+  }
+  .upgrade-card.maxed .upg-cost { color: var(--green); font-size: .7rem; }
+
+  /* ── Footer ── */
+  #footer {
+    grid-column: 1 / -1;
+    padding: 8px 24px;
+    border-top: 1px solid var(--border);
+    background: rgba(15,15,46,.9);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: .7rem;
+    color: var(--muted);
+  }
+
+  #prestige-btn {
+    background: linear-gradient(135deg, #f0c040, #f97316);
+    border: none;
+    color: #000;
+    font-family: 'Orbitron', sans-serif;
+    font-size: .65rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    letter-spacing: .05em;
+    opacity: .4;
+    transition: opacity .2s;
+    display: none;
+  }
+  #prestige-btn.ready { opacity: 1; display: inline-block; }
+
+  /* Milestone toast */
+  #toast {
+    position: fixed;
+    top: 80px; left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: linear-gradient(135deg, var(--panel), rgba(168,85,247,.3));
+    border: 1px solid var(--glow);
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-size: .8rem;
+    color: var(--text);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 100;
+    transition: opacity .3s, transform .3s;
+    text-align: center;
+    white-space: nowrap;
+  }
+  #toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<div id="app">
+
+  <!-- Header -->
+  <header id="header">
+    <div id="title">✦ Stardust Tycoon</div>
+    <button id="install-btn" title="Install this game">⬇ Install</button>
+    <div class="stat-block">
+      <div class="val" id="hdr-dust">0</div>
+      <div class="lbl">Stardust</div>
+    </div>
+    <div class="stat-block">
+      <div class="val" id="hdr-total">0</div>
+      <div class="lbl">All-Time</div>
+    </div>
+    <div class="stat-block">
+      <div class="val" id="hdr-cps">0</div>
+      <div class="lbl">Per Second</div>
+    </div>
+    <div class="stat-block">
+      <div class="val" id="hdr-cpc">1</div>
+      <div class="lbl">Per Click</div>
+    </div>
+  </header>
+
+  <!-- Clicker -->
+  <main id="clicker-area">
+    <button id="star-btn" title="Click me!">⭐</button>
+    <div id="click-hint">tap to harvest stardust</div>
+  </main>
+
+  <!-- Upgrades -->
+  <aside id="upgrade-panel">
+    <h2>UPGRADES</h2>
+    <div id="upgrades-list"></div>
+  </aside>
+
+  <!-- Footer -->
+  <footer id="footer">
+    <span id="footer-msg">Keep clicking to unlock upgrades…</span>
+    <button id="prestige-btn" onclick="prestige()">⚡ Prestige</button>
+  </footer>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Game state ──────────────────────────────────────────────────────────────
+const state = {
+  dust: 0,
+  totalDust: 0,
+  clickPower: 1,
+  cps: 0,
+  prestigeLevel: 0,
+  prestigeBonus: 1,
+  milestones: {},
+};
+
+// ── Upgrade definitions ─────────────────────────────────────────────────────
+const UPGRADES = [
+  { id:'cursor',   icon:'🖱️',  name:'Cosmic Cursor',   desc:'Adds +1 stardust per click.',      baseCost:15,   costMult:1.15, maxLevel:50, effect: s => { s.clickPower += 1; } },
+  { id:'dust2',    icon:'💫',  name:'Dust Collector',  desc:'+1 stardust per second.',           baseCost:80,   costMult:1.18, maxLevel:50, effect: s => { s.cps += 1; } },
+  { id:'click2',   icon:'✨',  name:'Star Magnet',     desc:'+5 stardust per click.',            baseCost:250,  costMult:1.2,  maxLevel:30, effect: s => { s.clickPower += 5; } },
+  { id:'gen2',     icon:'🌀',  name:'Nebula Spinner',  desc:'+5 stardust per second.',           baseCost:500,  costMult:1.2,  maxLevel:40, effect: s => { s.cps += 5; } },
+  { id:'click3',   icon:'⚡',  name:'Lightning Tap',   desc:'+20 stardust per click.',           baseCost:2000, costMult:1.25, maxLevel:20, effect: s => { s.clickPower += 20; } },
+  { id:'gen3',     icon:'🪐',  name:'Planet Forge',    desc:'+25 stardust per second.',          baseCost:3500, costMult:1.22, maxLevel:30, effect: s => { s.cps += 25; } },
+  { id:'click4',   icon:'🔥',  name:'Supernova Strike',desc:'+100 stardust per click.',          baseCost:20000,costMult:1.3,  maxLevel:15, effect: s => { s.clickPower += 100; } },
+  { id:'gen4',     icon:'🌌',  name:'Galaxy Engine',   desc:'+100 stardust per second.',         baseCost:25000,costMult:1.28, maxLevel:25, effect: s => { s.cps += 100; } },
+  { id:'click5',   icon:'💎',  name:'Diamond Cosmos',  desc:'+500 stardust per click.',          baseCost:200000,costMult:1.35,maxLevel:10, effect: s => { s.clickPower += 500; } },
+  { id:'gen5',     icon:'🕳️',  name:'Black Hole Core', desc:'+500 stardust per second.',         baseCost:300000,costMult:1.3, maxLevel:20, effect: s => { s.cps += 500; } },
+  { id:'gen6',     icon:'🌟',  name:'Quasar Matrix',   desc:'+2 500 stardust per second.',       baseCost:5e6,  costMult:1.35, maxLevel:15, effect: s => { s.cps += 2500; } },
+  { id:'gen7',     icon:'🚀',  name:'Warp Drive',      desc:'+10 000 stardust per second.',      baseCost:5e7,  costMult:1.4,  maxLevel:10, effect: s => { s.cps += 10000; } },
+];
+
+// Levels per upgrade
+const levels = {};
+UPGRADES.forEach(u => levels[u.id] = 0);
+
+function upgradeCost(upg) {
+  return Math.floor(upg.baseCost * Math.pow(upg.costMult, levels[upg.id]));
+}
+
+// ── Recalculate stats from scratch ─────────────────────────────────────────
+function recalcStats() {
+  state.clickPower = 1 + (state.prestigeLevel * 2 * state.prestigeBonus);
+  state.cps = 0;
+  UPGRADES.forEach(upg => {
+    for (let i = 0; i < levels[upg.id]; i++) {
+      const dummy = { clickPower: 0, cps: 0 };
+      upg.effect(dummy);
+      state.clickPower += dummy.clickPower;
+      state.cps += dummy.cps;
+    }
+  });
+  state.clickPower *= state.prestigeBonus;
+  state.cps *= state.prestigeBonus;
+}
+
+// ── Formatting ──────────────────────────────────────────────────────────────
+function fmt(n) {
+  if (n >= 1e15) return (n/1e15).toFixed(2) + 'Q';
+  if (n >= 1e12) return (n/1e12).toFixed(2) + 'T';
+  if (n >= 1e9)  return (n/1e9).toFixed(2)  + 'B';
+  if (n >= 1e6)  return (n/1e6).toFixed(2)  + 'M';
+  if (n >= 1e3)  return (n/1e3).toFixed(1)  + 'K';
+  return Math.floor(n).toLocaleString();
+}
+
+// ── DOM ─────────────────────────────────────────────────────────────────────
+const starBtn      = document.getElementById('star-btn');
+const upgradesList = document.getElementById('upgrades-list');
+const hdrDust      = document.getElementById('hdr-dust');
+const hdrTotal     = document.getElementById('hdr-total');
+const hdrCps       = document.getElementById('hdr-cps');
+const hdrCpc       = document.getElementById('hdr-cpc');
+const footerMsg    = document.getElementById('footer-msg');
+const prestigeBtn  = document.getElementById('prestige-btn');
+const toast        = document.getElementById('toast');
+
+// ── Build upgrade cards ─────────────────────────────────────────────────────
+const cards = {};
+UPGRADES.forEach(upg => {
+  const card = document.createElement('div');
+  card.className = 'upgrade-card locked';
+  card.id = 'card-' + upg.id;
+  card.innerHTML = `
+    <div class="upg-icon">${upg.icon}</div>
+    <div>
+      <div class="upg-name">${upg.name}</div>
+      <div class="upg-desc">${upg.desc}</div>
+      <div class="upg-count" id="cnt-${upg.id}">Lvl 0 / ${upg.maxLevel}</div>
+    </div>
+    <div class="upg-cost" id="cost-${upg.id}">⭐ ${fmt(upg.baseCost)}</div>
+  `;
+  card.addEventListener('click', () => buyUpgrade(upg));
+  upgradesList.appendChild(card);
+  cards[upg.id] = card;
+});
+
+// ── Buy ─────────────────────────────────────────────────────────────────────
+function buyUpgrade(upg) {
+  if (levels[upg.id] >= upg.maxLevel) return;
+  const cost = upgradeCost(upg);
+  if (state.dust < cost) return;
+  state.dust -= cost;
+  levels[upg.id]++;
+  recalcStats();
+  updateUI();
+  showToast(`${upg.icon} ${upg.name} → Lvl ${levels[upg.id]}`);
+}
+
+// ── Click ───────────────────────────────────────────────────────────────────
+starBtn.addEventListener('click', e => {
+  const gained = state.clickPower;
+  state.dust      += gained;
+  state.totalDust += gained;
+
+  // Floatie
+  const rect = starBtn.getBoundingClientRect();
+  const f = document.createElement('div');
+  f.className = 'floatie';
+  f.textContent = '+' + fmt(gained);
+  const x = e.clientX - rect.left + rect.left;
+  const y = e.clientY - rect.top  + rect.top  - 10;
+  f.style.left = (e.clientX - 20) + 'px';
+  f.style.top  = (e.clientY - 30) + 'px';
+  document.body.appendChild(f);
+  setTimeout(() => f.remove(), 900);
+
+  // Ripple
+  const r = document.createElement('div');
+  r.className = 'ripple';
+  const size = 80;
+  r.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX-size/2}px;top:${e.clientY-size/2}px;`;
+  document.body.appendChild(r);
+  setTimeout(() => r.remove(), 600);
+
+  // Button bounce
+  starBtn.classList.add('clicked');
+  setTimeout(() => starBtn.classList.remove('clicked'), 80);
+
+  checkMilestones();
+  updateUI();
+});
+
+// ── Tick (CPS) ──────────────────────────────────────────────────────────────
+setInterval(() => {
+  if (state.cps > 0) {
+    const gained = state.cps / 20;
+    state.dust      += gained;
+    state.totalDust += gained;
+    checkMilestones();
+    updateUI();
+  }
+}, 50);
+
+// ── Update UI ───────────────────────────────────────────────────────────────
+function updateUI() {
+  hdrDust.textContent  = fmt(state.dust);
+  hdrTotal.textContent = fmt(state.totalDust);
+  hdrCps.textContent   = fmt(state.cps);
+  hdrCpc.textContent   = fmt(state.clickPower);
+
+  UPGRADES.forEach(upg => {
+    const card = cards[upg.id];
+    const cost = upgradeCost(upg);
+    const maxed = levels[upg.id] >= upg.maxLevel;
+
+    document.getElementById('cnt-' + upg.id).textContent =
+      `Lvl ${levels[upg.id]} / ${upg.maxLevel}`;
+    document.getElementById('cost-' + upg.id).textContent =
+      maxed ? '✓ Maxed' : `⭐ ${fmt(cost)}`;
+
+    card.classList.toggle('locked', !maxed && state.dust < cost);
+    card.classList.toggle('maxed', maxed);
+  });
+
+  // Footer
+  const ps = fmt(state.cps);
+  footerMsg.textContent = state.cps > 0
+    ? `Earning ${ps} stardust / sec automatically`
+    : 'Keep clicking to unlock upgrades…';
+
+  // Prestige at 1M total
+  if (state.totalDust >= 1e6) {
+    prestigeBtn.classList.add('ready');
+  }
+}
+
+// ── Milestones ──────────────────────────────────────────────────────────────
+const MILESTONES = [
+  [100,   '💫 First 100 stardust!'],
+  [1000,  '⭐ 1 000 stardust collected!'],
+  [10000, '🌟 10 000 — you\'re a rising star!'],
+  [1e5,   '🪐 100 000 — cosmic milestone!'],
+  [5e5,   '🌌 500 000 — galaxy-class tycoon!'],
+  [1e6,   '🚀 1 MILLION — prestige unlocked!'],
+];
+
+function checkMilestones() {
+  MILESTONES.forEach(([threshold, msg]) => {
+    if (!state.milestones[threshold] && state.totalDust >= threshold) {
+      state.milestones[threshold] = true;
+      showToast(msg);
+    }
+  });
+}
+
+// ── Toast ───────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2400);
+}
+
+// ── Prestige ────────────────────────────────────────────────────────────────
+function prestige() {
+  if (state.totalDust < 1e6) return;
+  if (!confirm('Prestige? You\'ll lose all stardust and upgrades, but gain a permanent multiplier!')) return;
+  state.prestigeLevel++;
+  state.prestigeBonus = 1 + state.prestigeLevel * 0.5;
+  state.dust = 0;
+  state.totalDust = 0;
+  state.milestones = {};
+  UPGRADES.forEach(u => levels[u.id] = 0);
+  prestigeBtn.classList.remove('ready');
+  recalcStats();
+  updateUI();
+  showToast(`⚡ Prestige ${state.prestigeLevel}! Bonus: ×${state.prestigeBonus.toFixed(1)}`);
+}
+
+// ── Install ─────────────────────────────────────────────────────────────────
+let deferredPrompt = null;
+const installBtn = document.getElementById('install-btn');
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBtn.textContent = '⬇ Install';
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  installBtn.textContent = '✓ Installed';
+  showToast('⭐ Stardust Tycoon installed!');
+});
+
+installBtn.addEventListener('click', async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') showToast('⭐ Installing…');
+    deferredPrompt = null;
+    return;
+  }
+
+  // Fallback: platform-aware manual instructions
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua);
+  const isAndroid = /Android/.test(ua);
+  const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua);
+
+  let msg;
+  if (isIOS && isSafari) {
+    msg = 'Tap the Share icon, then "Add to Home Screen".';
+  } else if (isAndroid) {
+    msg = 'Open browser menu (⋮) → "Add to Home screen" or "Install app".';
+  } else {
+    msg = 'Look for an install icon (⊕) in your address bar — or use your browser menu → "Install Stardust Tycoon".';
+  }
+  alert('To install this game:\n\n' + msg + '\n\nNote: install prompts only appear when a page is served over https — opening the file directly limits what the browser can offer.');
+});
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+recalcStats();
+updateUI();
+</script>
+</body>
+</html>
